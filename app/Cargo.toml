@@ -24,7 +24,7 @@ tokio = { version = "1", features = ["macros", "rt"] }
 
 [features]
 default = ["web"]
-web = ["dioxus/web", "dep:gloo-timers"]
+web = ["dioxus/web"]
 server = [
     "dioxus/server",
     "dep:anyhow",
@@ -35,8 +35,3 @@ server = [
     "dep:time",
     "dep:uuid",
 ]
-
-[dependencies.gloo-timers]
-version = "0.3"
-features = ["futures"]
-optional = true
