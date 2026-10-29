@@ -128,8 +128,7 @@ impl UsersServiceTrait for UsersService {
                 user_id: Some(user.id),
                 user_agent,
             })
-            .await
-            .unwrap();
+            .await?;
 
         Ok((user.into_dto(token.access_token), token.refresh_token))
     }
