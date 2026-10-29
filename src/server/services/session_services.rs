@@ -22,6 +22,8 @@ pub trait SessionsServiceTrait {
     async fn new_session(&self, request: NewSessionDto) -> AppResult<SessionResponseDto>;
 
     async fn refresh_access_token(&self, id: Uuid) -> AppResult<ResponseUserDto>;
+
+    async fn revoke_session(&self, id: Uuid) -> AppResult<()>;
 }
 
 #[derive(Clone)]
@@ -83,5 +85,12 @@ impl SessionsServiceTrait for SessionsService {
         }
 
         Err(crate::server::error::Error::Unauthorized)
+    }
+
+    async fn revoke_session(&self, id: Uuid) -> AppResult<()> {
+        info!("revoking session {:?}", id);
+        self.repository.delete_session(id).await?;
+
+        Ok(())
     }
 }

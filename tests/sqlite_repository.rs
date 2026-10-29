@@ -47,6 +47,21 @@ async fn session_lookup_respects_expiry() {
 }
 
 #[tokio::test]
+async fn deleted_session_no_longer_finds_its_user() {
+    let db = db().await;
+    let user = db.create_user("g@example.com", "G", "hash").await.unwrap();
+    let exp = OffsetDateTime::now_utc() + Duration::from_secs(60);
+    let session = db.new_session(user.id, "test", &exp).await.unwrap();
+    let other = db.new_session(user.id, "other", &exp).await.unwrap();
+
+    db.delete_session(session.id).await.unwrap();
+
+    assert!(db.get_user_by_session_id(session.id).await.unwrap().is_none());
+    assert!(db.get_user_by_session_id(other.id).await.unwrap().is_some());
+    db.delete_session(session.id).await.unwrap();
+}
+
+#[tokio::test]
 async fn categories_crud_for_one_user() {
     let db = db().await;
     let user = db.create_user("d@example.com", "D", "hash").await.unwrap();

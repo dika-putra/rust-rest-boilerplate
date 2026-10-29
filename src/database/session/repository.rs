@@ -1,6 +1,6 @@
 use anyhow::Context;
 use async_trait::async_trait;
-use sqlx::query_as;
+use sqlx::{query, query_as};
 use sqlx::types::time::{OffsetDateTime, UtcOffset};
 use uuid::Uuid;
 
@@ -48,5 +48,15 @@ impl SessionsRepository for Database {
         .fetch_optional(&self.pool)
         .await
         .context("user was not found")
+    }
+
+    async fn delete_session(&self, id: Uuid) -> anyhow::Result<()> {
+        query("delete from sessions where id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .context("an unexpected error occurred deleting the session")?;
+
+        Ok(())
     }
 }

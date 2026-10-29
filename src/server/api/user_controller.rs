@@ -99,7 +99,7 @@ impl UserController {
     ) -> AppResult<CookieJar> {
         info!("recieved request to signout session {:?}", session_id);
 
-        services.sessions.refresh_access_token(session_id).await?;
+        services.sessions.revoke_session(session_id).await?;
 
         // The removal cookie must carry the same path, or the browser keeps the original.
         let cookie = jar.remove(refresh_token_cookie(String::new(), services.secure_cookies));
