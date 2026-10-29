@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tracing::info;
 
 use crate::{
-    config::AppConfig,
+    config::{AppConfig, CargoEnv},
     database::Database,
     server::{
         services::{
@@ -35,10 +35,13 @@ pub struct Services {
     pub users: DynUsersService,
     pub sessions: DynSessionsService,
     pub categories: DynCategoriesService,
+    pub secure_cookies: bool,
 }
 
 impl Services {
     pub fn new(db: Database, config: Arc<AppConfig>) -> Self {
+        let secure_cookies = matches!(config.cargo_env, CargoEnv::Production);
+
         info!("initializing utility services...");
         let security_service = Arc::new(ArgonSecurityUtil::new(config.clone())) as DynArgonUtil;
         let jwt_util = Arc::new(JwtTokenUtil::new(config)) as DynJwtUtil;
@@ -64,6 +67,7 @@ impl Services {
             users,
             sessions,
             categories,
+            secure_cookies,
         }
     }
 }

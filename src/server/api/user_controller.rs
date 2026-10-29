@@ -1,10 +1,10 @@
 use axum::extract::Json;
 use axum::routing::{get, post, put};
 use axum::{Extension, Router};
-use axum_extra::extract::cookie::{Cookie, CookieJar};
+use axum_extra::extract::cookie::CookieJar;
 use tracing::info;
 
-use crate::extractors::{SessionExtractor, UserAgentExtractor};
+use crate::extractors::{refresh_token_cookie, SessionExtractor, UserAgentExtractor};
 use crate::server::dtos::user_dto::{
     SignInUserDto, SignUpUserDto, UpdateUserDto, UserAuthenicationResponse,
 };
@@ -52,7 +52,7 @@ impl UserController {
 
         let (user, refresh_token) = services.users.signin_user(request, user_agent).await?;
 
-        let cookie = jar.add(Cookie::new("refresh_token", refresh_token.to_string()));
+        let cookie = jar.add(refresh_token_cookie(refresh_token, services.secure_cookies));
 
         Ok((cookie, Json(UserAuthenicationResponse { user })))
     }
@@ -87,7 +87,7 @@ impl UserController {
 
         let user = services.sessions.refresh_access_token(session_id).await?;
 
-        let cookie = jar.add(Cookie::new("refresh_token", refresh_token));
+        let cookie = jar.add(refresh_token_cookie(refresh_token, services.secure_cookies));
 
         Ok((cookie, Json(UserAuthenicationResponse { user })))
     }
@@ -101,7 +101,8 @@ impl UserController {
 
         services.sessions.refresh_access_token(session_id).await?;
 
-        let cookie = jar.remove(Cookie::named("refresh_token"));
+        // The removal cookie must carry the same path, or the browser keeps the original.
+        let cookie = jar.remove(refresh_token_cookie(String::new(), services.secure_cookies));
 
         Ok(cookie)
     }
