@@ -18,3 +18,9 @@ Cargo.lock
 
 logs/*
 !logs/.gitkeep
+
+# local SQLite databases
+data/
+*.db
+*.db-shm
+*.db-wal
