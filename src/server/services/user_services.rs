@@ -20,7 +20,7 @@ use crate::{
 use super::session_services::DynSessionsService;
 
 /// A reference counter for our user service allows us safely pass instances user utils
-/// around which themselves depend on the user repostiory, and ultimately, our Posgres connection pool.
+/// around which themselves depend on the user repostiory, and ultimately, our SQLite connection pool.
 pub type DynUsersService = Arc<dyn UsersServiceTrait + Send + Sync>;
 
 #[automock]

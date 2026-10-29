@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
 
     let _guard = Logger::init(config.cargo_env);
 
-    info!("environment loaded and configuration parsed, initializing Postgres connection and running migrations...");
+    info!("environment loaded and configuration parsed, opening the SQLite database and running migrations...");
     let db = Database::connect(&config.database_url, config.run_migrations)
         .await
         .expect("could not initialize the database connection pool");

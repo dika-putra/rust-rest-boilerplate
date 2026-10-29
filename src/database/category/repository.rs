@@ -1,5 +1,6 @@
 use anyhow::Context;
 use async_trait::async_trait;
+use sqlx::types::time::OffsetDateTime;
 use sqlx::{query, query_as};
 use uuid::Uuid;
 
@@ -15,49 +16,48 @@ impl CategoriesRepository for Database {
         name: String,
         cat_type: CategoryType,
     ) -> anyhow::Result<Category> {
-        query_as!(
-            Category,
+        let now = OffsetDateTime::now_utc();
+        query_as::<_, Category>(
             r#"
-        insert into categories (created_at, updated_at, name, user_id,cat_type)
-        values (current_timestamp, current_timestamp, $1::varchar, $2, $3)
-        returning id, name, cat_type as "cat_type: CategoryType", user_id, created_at, updated_at
+        insert into categories (id, created_at, updated_at, name, user_id, cat_type)
+        values (?, ?, ?, ?, ?, ?)
+        returning *
             "#,
-            name,
-            user_id,
-            cat_type as _
         )
+        .bind(Uuid::new_v4())
+        .bind(now)
+        .bind(now)
+        .bind(name)
+        .bind(user_id)
+        .bind(cat_type)
         .fetch_one(&self.pool)
         .await
         .context("an unexpected error occured while creating the category")
     }
 
     async fn get_category_by_id(&self, id: Uuid) -> anyhow::Result<Option<Category>> {
-        query_as!(
-            Category,
+        query_as::<_, Category>(
             r#"
-        select id, name, cat_type as "cat_type: CategoryType", user_id, created_at, updated_at
+        select *
         from categories
-        where id = $1
+        where id = ?
             "#,
-            id,
         )
+        .bind(id)
         .fetch_optional(&self.pool)
         .await
         .context("category was not found")
     }
 
     async fn get_categories(&self, user_id: Uuid) -> anyhow::Result<Vec<Category>> {
-        query_as!(
-            Category,
+        query_as::<_, Category>(
             r#"
-        select categories.id, categories.name, categories.cat_type as "cat_type: CategoryType",
-        categories.user_id, categories.created_at, categories.updated_at
+        select *
         from categories
-        inner join users on categories.user_id=users.id
-        where users.id = $1
+        where user_id = ?
             "#,
-            user_id,
         )
+        .bind(user_id)
         .fetch_all(&self.pool)
         .await
         .context("category was not found")
@@ -69,33 +69,34 @@ impl CategoriesRepository for Database {
         name: String,
         cat_type: CategoryType,
     ) -> anyhow::Result<Category> {
-        query_as!(
-            Category,
+        query_as::<_, Category>(
             r#"
         update categories
         set
-            name = $1::varchar,
-            cat_type = $2
-        where id = $3
-        returning id, name, cat_type as "cat_type: CategoryType", user_id, created_at, updated_at
+            name = ?,
+            cat_type = ?,
+            updated_at = ?
+        where id = ?
+        returning *
             "#,
-            name,
-            cat_type as _,
-            id
         )
+        .bind(name)
+        .bind(cat_type)
+        .bind(OffsetDateTime::now_utc())
+        .bind(id)
         .fetch_one(&self.pool)
         .await
         .context("could not update the category")
     }
 
     async fn delete_category(&self, id: Uuid) -> anyhow::Result<()> {
-        query!(
+        query(
             r#"
         delete from categories
-        where id = $1
+        where id = ?
         "#,
-            id
         )
+        .bind(id)
         .execute(&self.pool)
         .await
         .context("an unexpected error occurred deleting category")?;

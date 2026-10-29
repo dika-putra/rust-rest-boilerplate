@@ -34,7 +34,6 @@ impl Default for Category {
 pub type DynCategoriesRepository = Arc<dyn CategoriesRepository + Send + Sync>;
 
 #[derive(sqlx::Type, Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[sqlx(type_name = "category_type")]
 pub enum CategoryType {
     Essential,
     NonEssential,
